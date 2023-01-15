@@ -4,7 +4,7 @@ from flask_restful import Api, Resource
 app = Flask(__name__)
 api = Api(app)
 
-names ={}
+names = {}
 
 class HelloWorld(Resource):
     def get(self, name, test):
