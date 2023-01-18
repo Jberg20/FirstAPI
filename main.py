@@ -15,6 +15,13 @@ class BandList(Resource):
             return {"message": result}
         else:
             return {"message": "No bands found"}
+    def delete(self):
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("DELETE FROM bands")
+        conn.commit()
+        return {"message": "All bands has been deleted"}
+
 
 class Band(Resource):
     def get(self, band_id):
