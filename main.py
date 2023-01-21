@@ -1,67 +1,42 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
+from flask_sqlalchemy import SQLAlchemy
 import sqlite3
 
 app = Flask(__name__)
 api = Api(app)
-
-class BandList(Resource):
-    def get(self):
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute("SELECT * FROM bands")
-        result = c.fetchall()
-        if result:
-            return {"message": result}
-        else:
-            return {"message": "No bands found"}
-    def delete(self):
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute("DELETE FROM bands")
-        conn.commit()
-        return {"message": "All bands has been deleted"}
+db = SQLAlchemy(app)
 
 
-class Band(Resource):
-    def get(self, band_id):
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute("SELECT * FROM bands WHERE band_id=?", (band_id,))
-        result = c.fetchone()
-        if result:
-            return {"message": result}
-        else:
-            return {"message": "Band not found"}
 
-    def post(self):
-        data = request.get_json()
-        if not all(key in data for key in ('band_name', 'band_genre', 'gigs', 'rating')):
-            return {"message": "Missing data"}
-        band_name = data['band_name']
-        band_genre = data['band_genre']
-        gigs = data['gigs']
-        rating = data['rating']
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute("INSERT INTO bands (band_name,band_genre,gigs,rating) VALUES (?,?,?,?)", (band_name,band_genre,gigs,rating))
-        conn.commit()
-        return {"message": "Success"}
 
-api.add_resource(BandList, '/bands')
-api.add_resource(Band, '/bands/<int:band_id>')
+class Band(db.Model):
+    band_ID = db.Column(db.Integer, primary_key=True)
+    band_Name = db.Column(db.String(80), unique=True, nullable=False)
+    band_Genre = db.Column(db.String(80), unique=True, nullable=False)
+    band_Gigs = db.Column(db.Integer, nullable=False)
+    band_Rating = db.Column(db.Integer, nullable=False)
+
+    def to_dict(self):
+        return {
+                'band_ID': self.band_ID,
+                'band_Name': self.band_Name,
+                'band_Genre': self.band_Genre,
+                'band_Gigs': self.band_Gigs,
+                'band_Rating': self.band_Rating
+        }
+
+@app.route('/bands/<int:band_ID>', methods=['GET'])
+def get_band(band_ID):
+    band = Band.query.get(band_ID)
+    if band:
+        return jsonify(band.to_dict())
+    else:
+        return jsonify({"message": "Band not found"}), 404
+
+    
 
 
 if __name__ == "__main__":
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute("DROP TABLE IF EXISTS bands")
-    c.execute("""CREATE TABLE IF NOT EXISTS bands (
-                band_id INTEGER PRIMARY KEY,
-                band_name TEXT,
-                band_genre TEXT,
-                gigs INTEGER,
-                rating INTEGER
-                )""")
-    conn.commit()
+    db.create_all()
     app.run(debug=True)
