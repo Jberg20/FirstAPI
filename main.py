@@ -49,7 +49,7 @@ class Band(Resource):
         return {"message": "Success"}
 
 api.add_resource(BandList, '/bands')
-api.add_resource(Band, '/bands/<int:band_id>')
+api.add_resource(Band, '/bands')
 
 
 if __name__ == "__main__":
