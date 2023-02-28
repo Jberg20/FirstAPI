@@ -6,7 +6,9 @@ app = Flask(__name__)
 api = Api(app)
 
 class BandList(Resource):
+    print("BandList loaded")
     def get(self):
+        print("running getall")
         conn = sqlite3.connect('database.db')
         c = conn.cursor()
         c.execute("SELECT * FROM bands")
@@ -15,26 +17,9 @@ class BandList(Resource):
             return {"message": result}
         else:
             return {"message": "No bands found"}
-    def delete(self):
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute("DELETE FROM bands")
-        conn.commit()
-        return {"message": "All bands has been deleted"}
-
-
-class Band(Resource):
-    def get(self, band_id):
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute("SELECT * FROM bands WHERE band_id=?", (band_id,))
-        result = c.fetchone()
-        if result:
-            return {"message": result}
-        else:
-            return {"message": "Band not found"}
 
     def post(self):
+        print("running post method")
         data = request.get_json()
         if not all(key in data for key in ('band_name', 'band_genre', 'gigs', 'rating')):
             return {"message": "Missing data"}
@@ -48,11 +33,53 @@ class Band(Resource):
         conn.commit()
         return {"message": "Success"}
 
+    def delete(self):
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("DELETE FROM bands")
+        conn.commit()
+        return {"message": "All bands has been deleted"}
+
+
+class Band(Resource):
+    print("Band loaded")
+    def get(self, band_id):
+        print("running get method")
+        print(band_id)
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("SELECT * FROM bands WHERE band_id=?", (band_id,))
+        result = c.fetchone()
+        if result:
+            return {"message": result}
+        else:
+            return {"message": "Band not found"}
+    
+    def put(self, band_id):
+        print("running put method")
+        data = request.get_json()
+        if not data or not all(key in data for key in ('band_name', 'band_genre', 'gigs', 'rating')):
+            return {"message": "Missing data"}
+        band_name = data['band_name']
+        band_genre = data['band_genre']
+        gigs = data['gigs']
+        rating = data['rating']
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("UPDATE bands SET band_name=?, band_genre=?, gigs=?, rating=? WHERE band_id=?", (band_name, band_genre, gigs, rating, band_id))
+        conn.commit()
+        return {"message": f"Band {band_id} updated"}
+
+
+
+    
+
 api.add_resource(BandList, '/bands')
-api.add_resource(Band, '/bands')
+api.add_resource(Band, '/bands/<int:band_id>')
 
 
 if __name__ == "__main__":
+    print("API is active")
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("DROP TABLE IF EXISTS bands")
