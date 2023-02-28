@@ -69,6 +69,15 @@ class Band(Resource):
         c.execute("UPDATE bands SET band_name=?, band_genre=?, gigs=?, rating=? WHERE band_id=?", (band_name, band_genre, gigs, rating, band_id))
         conn.commit()
         return {"message": f"Band {band_id} updated"}
+    
+    def delete(self, band_id):
+        print("running delete method")
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("DELETE FROM bands WHERE band_id=?", (band_id,))
+        conn.commit()
+        return {"message":f"Band {band_id} deleted"}
+
 
 
 
